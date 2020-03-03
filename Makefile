@@ -8,6 +8,7 @@ USER_NAME = marskar
 
 all: env git
 
+# Conda environment setup
 env: $(VENV_PATH)/bin/activate
 
 $(VENV_PATH)/bin/activate: environment.yml
@@ -18,6 +19,7 @@ environment.yml:
 	conda create -yn $(VENV_NAME)
 	conda env export --from-history -n $(VENV_NAME) > environment.yml
 
+# Git setup
 git: .git/
 
 .git/:
@@ -29,40 +31,60 @@ git: .git/
 	git remote add origin https://github.com/$(USER_NAME)/$(REPO_NAME)
 	git push --set-upstream origin master
 
-push:
-	git commit --all --message "Changed files: $$(git status --porcelain | grep -v '?' | cut -c4- | tr '\n' ' ')"
+# Git workflow
+.gitignore:
+	echo ".mypy_cache\n__pycache__" > .gitignore
+
+add: git
+	git add --update
+
+commit: add
+	git commit --message "Changed files: $$(git status --porcelain | grep -v '?' | cut -c4- | tr '\n' ' ')"
+
+push: commit
 	git push
 
 amend:
-	git commit --all --amend --reset-author --reuse-message=HEAD
+	git add --update
+	git commit --amend --reset-author --reuse-message=HEAD
 	git push --force
 
 # Python-specific section (delete if not needed)
-pyvenv: env
-	conda env update -n $(VENV_NAME) python=3.8 black pytest pytest-mypy r-styler r-testthat
-	touch $(VENV_PATH)/bin/activate
-	conda env export --from-history -n $(VENV_NAME) > environment.yml
-
-pytest: env pytest.ini
+pytest: $(VENV_PATH)/bin/black pytest.ini
 	$(VENV_PATH)/bin/pytest
+
+$(VENV_PATH)/bin/black:
+	conda install -n $(VENV_NAME) python=3.8 black
+	conda env export --from-history -n $(VENV_NAME) > environment.yml
+	touch $(VENV_PATH)/bin/activate
+
+$(VENV_PATH)/bin/pytest:
+	conda install -n $(VENV_NAME) python=3.8 pytest pytest-mypy
+	conda env export --from-history -n $(VENV_NAME) > environment.yml
+	touch $(VENV_PATH)/bin/activate
 
 pytest.ini:
 	echo "[pytest]\naddopts = --mypy --mypy-ignore-missing-imports --doctest-modules" > pytest.ini
 
-pylint: env
+pylint: $(VENV_PATH)/bin/black
 	$(VENV_PATH)/bin/black
 
 # R-specific section (delete if not needed)
-rvenv: env
-	conda install -n $(VENV_NAME) r-styler r-testthat
-	touch $(VENV_PATH)/bin/activate
+$(VENV_PATH)/lib/R/library/testthat:
+	conda install -n $(VENV_NAME) r-testthat
 	conda env export --from-history -n $(VENV_NAME) > environment.yml
+	touch $(VENV_PATH)/bin/activate
 
-rtest: rvenv
+$(VENV_PATH)/lib/R/library/styler:
+	conda install -n $(VENV_NAME) r-styler
+	conda env export --from-history -n $(VENV_NAME) > environment.yml
+	touch $(VENV_PATH)/bin/activate
+
+rtest: $(VENV_PATH)/lib/R/library/testthat
 	mkdir -p tests/testthat
 	$(VENV_PATH)/bin/Rscript -e "testthat::test_dir('tests/testthat')"
 
-rlint: rvenv
+rlint: $(VENV_PATH)/lib/R/library/styler
 	$(VENV_PATH)/bin/Rscript -e "styler::style_dir()"
 
-.PHONY: env git push amend pytest pylint rtest rlint
+.PHONY: env git add commit push amend pytest pylint rtest rlint

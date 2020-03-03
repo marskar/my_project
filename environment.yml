@@ -1,0 +1,14 @@
+name: my_project
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - pytest-mypy
+  - pytest
+  - black
+  - python=3.8
+  - r-testthat
+  - r-styler
+prefix: /Users/marskar/miniconda/envs/my_project
+
