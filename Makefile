@@ -6,7 +6,7 @@ VENV_PATH = $(VENV_ROOT)/envs/$(VENV_NAME)
 REPO_NAME = $(PROJ_NAME)
 USER_NAME = marskar
 
-all: env git test lint
+all: env git
 
 env: $(VENV_PATH)/bin/activate
 
@@ -15,7 +15,7 @@ $(VENV_PATH)/bin/activate: environment.yml
 	touch $(VENV_PATH)/bin/activate
 
 environment.yml:
-	conda create -yn $(VENV_NAME) python=3.8 black pytest pytest-mypy r-styler r-testthat
+	conda create -yn $(VENV_NAME)
 	conda env export --from-history -n $(VENV_NAME) > environment.yml
 
 git: .git/
@@ -37,7 +37,12 @@ amend:
 	git commit --all --amend --reset-author --reuse-message=HEAD
 	git push --force
 
-# Python-specific section
+# Python-specific section (delete if not needed)
+pyvenv: env
+	conda env update -n $(VENV_NAME) python=3.8 black pytest pytest-mypy r-styler r-testthat
+	touch $(VENV_PATH)/bin/activate
+	conda env export --from-history -n $(VENV_NAME) > environment.yml
+
 pytest: env pytest.ini
 	$(VENV_PATH)/bin/pytest
 
@@ -47,11 +52,17 @@ pytest.ini:
 pylint: env
 	$(VENV_PATH)/bin/black
 
-# R-specific section
-rtest: env
-	$(VENV_PATH)/bin/Rscript -e "testthat::test_dir(tests/testthat)"
+# R-specific section (delete if not needed)
+rvenv: env
+	conda install -n $(VENV_NAME) r-styler r-testthat
+	touch $(VENV_PATH)/bin/activate
+	conda env export --from-history -n $(VENV_NAME) > environment.yml
 
-rlint: env
+rtest: rvenv
+	mkdir -p tests/testthat
+	$(VENV_PATH)/bin/Rscript -e "testthat::test_dir('tests/testthat')"
+
+rlint: rvenv
 	$(VENV_PATH)/bin/Rscript -e "styler::style_dir()"
 
-.PHONY: env git push amend test lint
+.PHONY: env git push amend pytest pylint rtest rlint
