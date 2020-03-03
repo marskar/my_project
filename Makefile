@@ -1,6 +1,3 @@
-# If ENV is pipenv, run export PIPENV_VENV_IN_PROJECT=1
-# Otherwise, .venv will not be in the current project.
-
 PROJ_NAME = my_project
 PROJ_DESC = "A short description of the project."
 VENV_ROOT = ~/miniconda
