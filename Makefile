@@ -64,7 +64,7 @@ $(VENV_PATH)/bin/pytest:
 	touch $(VENV_PATH)/bin/activate
 
 pytest.ini:
-	echo "[pytest]\naddopts = --mypy --mypy-ignore-missing-imports --doctest-modules" > pytest.ini
+	echo "[pytest]\naddopts = --doctest-modules --mypy --mypy-ignore-missing-imports" > pytest.ini
 
 pylint: $(VENV_PATH)/bin/black
 	$(VENV_PATH)/bin/black
