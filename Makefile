@@ -32,9 +32,6 @@ git: .git/
 	git push --set-upstream origin master
 
 # Git workflow
-.gitignore:
-	echo ".mypy_cache\n__pycache__" > .gitignore
-
 add: git
 	git add --update
 
@@ -50,6 +47,9 @@ amend:
 	git push --force
 
 # Python-specific section (delete if not needed)
+pyignore:
+	curl https://raw.githubusercontent.com/github/gitignore/master/Python.gitignore >> .gitignore
+
 pytest: $(VENV_PATH)/bin/black pytest.ini
 	$(VENV_PATH)/bin/pytest
 
@@ -70,6 +70,9 @@ pylint: $(VENV_PATH)/bin/black
 	$(VENV_PATH)/bin/black
 
 # R-specific section (delete if not needed)
+rignore:
+	curl https://raw.githubusercontent.com/github/gitignore/master/R.gitignore >> .gitignore
+
 $(VENV_PATH)/lib/R/library/testthat:
 	conda install -n $(VENV_NAME) r-testthat
 	conda env export --from-history -n $(VENV_NAME) > environment.yml
