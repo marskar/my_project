@@ -15,7 +15,7 @@ $(VENV_PATH)/bin/activate: environment.yml
 	touch $(VENV_PATH)/bin/activate
 
 environment.yml:
-	conda create -yn $(VENV_NAME) python=3.8 black pytest pytest-mypy
+	conda create -yn $(VENV_NAME) python=3.8 black pytest pytest-mypy r-styler r-testthat
 	conda env export --from-history -n $(VENV_NAME) > environment.yml
 
 git: .git/
@@ -37,14 +37,21 @@ amend:
 	git commit --all --amend --reset-author --reuse-message=HEAD
 	git push --force
 
-# python-specific section
-test: env pytest.ini
+# Python-specific section
+pytest: env pytest.ini
 	$(VENV_PATH)/bin/pytest
 
 pytest.ini:
 	echo "[pytest]\naddopts = --mypy --mypy-ignore-missing-imports --doctest-modules" > pytest.ini
 
-lint: env
+pylint: env
 	$(VENV_PATH)/bin/black
 
-.PHONY: env git test lint
+# R-specific section
+rtest: env
+	$(VENV_PATH)/bin/Rscript -e "testthat::test_dir(tests/testthat)"
+
+rlint: env
+	$(VENV_PATH)/bin/Rscript -e "styler::style_dir()"
+
+.PHONY: env git push amend test lint
